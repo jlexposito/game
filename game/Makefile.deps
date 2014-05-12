@@ -16,4 +16,5 @@ Player.o: Player.cc Player.hh Utils.hh BackTrace.hh PosDir.hh Board.hh \
 PosDir.o: PosDir.cc PosDir.hh Utils.hh BackTrace.hh
 Registry.o: Registry.cc Registry.hh Utils.hh BackTrace.hh
 Utils.o: Utils.cc Utils.hh BackTrace.hh
+bfs.o: bfs.cc
 prueba.o: prueba.cc

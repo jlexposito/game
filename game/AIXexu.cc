@@ -51,12 +51,16 @@ struct PLAYER_NAME : public Player {
             files = rows();
             columnes = cols();
             map = vector<vector<CType> >(files, vector<CType>(columnes));
-            escanejar_mapa(map);
+            /*escanejar_mapa(map);
+            escriure_mapa(map);
+            */
             dirs = vector<Dir>(nb_ghosts() + 1);
             for (int i=0; i <= nb_ghosts(); ++i) dirs[i] = rand_dir(None);
         }
         // move pacman
         cout << "!!!!!!!!!! RONDA " << round() << " !!!!!!!!!!!" <<endl;
+        /*escanejar_mapa(map);
+        escriure_mapa(map);*/
         Pos p = pacman(me()).pos;   // retorna la posicio del pacman
         Dir mov = None;
         mov = go(p);
@@ -67,7 +71,7 @@ struct PLAYER_NAME : public Player {
             if (not ghost_can_move(q, dirs[i+1]) or rand()%1000==0) dirs[i+1] = rand_dir( dirs[i+1]);
             move_my_ghost(i, dirs[i+1]);
         }
-        escanejar_mapa(map);
+        //escanejar_mapa(map);
     }
 
     void escanejar_mapa(vector<vector<CType> >&map){
@@ -76,122 +80,92 @@ struct PLAYER_NAME : public Player {
         }
     }
 
-/*  Escriure mapa, funcio x comprovar que llegim be el mapa
+  //Escriure mapa, funcio x comprovar que llegim be el mapa
   void escriure_mapa(vector<vector<CType> >&map){
         for(int i = 0; i < files; ++i){
             for(int j = 0; j < columnes; ++j) cout << map[i][j];
             cout << endl;
         }
-    }*/
+    }
 
     Dir go(Pos& p){  //Devuelve la posicion a la que nos movemos
-        Dir x;
-        int dis = 0;
-        bool b = false;
-        vector<vector<bool> > vis(files,vector<bool>(columnes, false));
-        x = bfs_rec (b, map, p, dis, vis);
-        if(x == None){
-            if(pac_can_move (p, Top)) x = Top;
-            if(pac_can_move (p, Bottom)) x = Bottom;
-            if(pac_can_move (p, Left)) x = Left;
-            if(pac_can_move (p, Right)) x = Right;
-        }
-        cout << "resultado final: "<< x << endl;
-        return x;
+        Dir next = None;
+        bool found = false;
+        int x  = p.i;
+        int y = p.j;
+        next = bfs (x, y, found);
+        cout << "FINAL: "<< next << endl;
+        if(pacman(me()).type == PowerPacMan) cout << "SUPERPODERES :] !!!" << endl;
+        return next;
 
     }
     
+    Dir bfs (int x, int y, bool& found) {
+        int n = rows();
+        int m = cols();
+        Dir siguiente = None;
+        vector<vector<int> > leng(n, vector<int> (m, -1));
+        queue<pair<int, int> > q;
+        q.push(make_pair(x, y));
+        leng[x][y] = 5;
+        //cout << "INITIAL POSITION: " << x << " " << y << endl;
+        cout << leng[x][y] << endl;
+        pair<int,int> fin;
 
-    Dir bfs_rec(bool& b, vector<vector<CType> > matrix, Pos& p, int& dis, vector<vector<bool> >& vis) {
-        if (p.i >= 0 and p.j >= 0 and p.i <= files and p.j <= columnes and matrix[p.i][p.j] != Wall and matrix[p.i][p.j] != Gate and not vis[p.i][p.j]) {
-            int disl, disr, disb, dist;
-            disl = disr = disb = dist = dis;
-            Pos posl, posr, posb, post;
-            bool bl, br, bb, bt;
-            bl = br = bb = bt = false;
-            vis[p.i][p.j] = true;
-            if(matrix[p.i][p.j] == Dot or matrix[p.i][p.j] == Pill or matrix[p.i][p.j] == Bonus) b = true;
-            else{
-                disl = disr = disb = dist = dis+1;
-                posb = posl = posr = post = p;
-                posl.j -= 1;
-                posr.j += 1;
-                post.i -= 1;
-                posb.i += 1;
-                bl = br = bb = bt = false;
-                bfs_rec(bb, matrix, posb, disb, vis);
-                bfs_rec(bt, matrix, post, dist, vis);
-                bfs_rec(br, matrix, posr, disr, vis);
-                bfs_rec(bl, matrix, posl, disl, vis);
-                cout << "booleans" << "bb: " << bb  << " bt: " << bt << " br: " << br << " bl: " << bl << endl;
-                return min_aux(bt,bb,bl,br,dist,disb,disl,disr);
+        int dx[4] = {-1, 1, 0, 0};
+        int dy[4] = {0, 0, -1, 1};
+
+        while (not q.empty() and not found) {
+            pair<int, int> p = q.front();
+            q.pop();
+            cout << "Posicion inicial: " << p.first << ", " << p.second <<endl;
+            for (int i = 0; i < 4 and not found; ++i) {
+                int xx = p.first + dx[i];
+                int yy = p.second + dy[i];
+                if (xx >= 0 and xx < n) {
+                    if (yy >= 0 and yy < m) {
+                        CType c = cell(xx,yy).type;
+                        if (c != Wall and c != Gate and leng[xx][yy] == -1) {
+                            cout << "Posicion: " << xx << "," << yy << " i: " << i << " casilla: " << c << endl;
+                            if ((c == Dot or c == Pill or c == Bonus or c == Hammer or c == Mushroom) and not found) {
+                                cout << "encontrado" << endl;
+                                found = true;
+                                fin = make_pair(xx,yy);
+                            }
+                            leng[xx][yy] = i;
+                            q.push(make_pair(xx, yy));
+                        }
+                    }
+                }
             }
-            return None;
         }
-        return None;
+        int row = fin.first;
+        int col  = fin.second;
+        while(leng[row][col] != 5){
+            int sig = leng[row][col];
+            cout << sig << endl;
+            if(sig == 0) ++row;
+            else if(sig == 1) --row;
+            else if(sig == 2) ++col;
+            else if(sig == 3) --col;
+            if(leng[row][col] == 5){
+                cout << "hemos llegado al inicio siguiente: " << sig << endl;
+                if(sig == 0) siguiente = Top;
+                else if(sig == 1) siguiente = Bottom;
+                else if(sig == 2) siguiente = Left;
+                else if(sig == 3) siguiente = Right;
+                cout << siguiente << endl;
+            }
+        }
+        for(int i = 0; i < n; ++i){
+            for(int j = 0; j < m; ++j) cout << leng[i][j];
+            cout << endl;
+        }
+
+        return siguiente;
     }
+
     
-    Dir min_aux(bool b1, bool b2, bool b3, bool b4, int dis1, int dis2, int dis3, int dis4){
-        int minimo1, minimo2;
-        minimo1 = minimo2 = 0;
-        cout << "dis1: " << dis1 << " dis2: " << dis2 << " dis3: " << dis3 << " dis4: " << dis4 << endl;
-        if(b1){
-            if(b2){
-                if(b3){
-                    if(b4){
-                        minimo1 = min(dis1,dis2);
-                        minimo2 = min(dis3,dis4);
-                        minimo1 = min(minimo1,minimo2);
-                        if(minimo1 == dis1) return Top;
-                        else if(minimo1 == dis2) return Bottom;
-                        else if(minimo1 == dis3) return Left;
-                        else return Right;
-                    }
-                    else {
-                        minimo1 = min(dis1,dis2);
-                        minimo1 = min(minimo1,dis3);
-                        if(minimo1 == dis1) return Top;
-                        else if(minimo1 == dis2) return Bottom;
-                        else return Left;
-                    }
-                }
-                else{
-                    minimo1 = min(dis1,dis2);
-                    if(minimo1 == dis1) return Top;
-                    else if(minimo1 == dis2) return Bottom;
-                }
-            }
-            else return Top; 
-        }
-        else if(b2){
-            if(b3){
-                if(b4){
-                    minimo2 = min(dis3,dis4);
-                    minimo1 = min(dis2,minimo2);
-                    if(minimo1 == dis2) return Bottom;
-                    else if(minimo1 == dis3) return Left;
-                    else return Right;
-                }
-                else {
-                    minimo1 = min(dis2,dis3);
-                    if(minimo1 == dis2) return Bottom;
-                    else if(minimo1 == dis3) return Left;
-                }
-            }
-            else return Bottom;
-        }
-        else if(b3){
-            if(b4){
-                minimo1 = min(dis3,dis4);
-                if(minimo1 == dis3) return Left;
-                else return Right;
-            }
-            else return Left;
-        }
-        else if(b4) return Right;
-        return None;
-    }
-
     inline bool pac_can_move (Pos p, Dir d) {       //RETORNA SI PODEM MOURE EL PACMAN
         CType t = cell(dest(p, d)).type;
         if (t == Wall or t == Gate) return false;
@@ -224,5 +198,4 @@ struct PLAYER_NAME : public Player {
  * Do not modify the following line.
  */
 RegisterPlayer(PLAYER_NAME);
-
 
