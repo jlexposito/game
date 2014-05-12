@@ -58,7 +58,7 @@ struct PLAYER_NAME : public Player {
             for (int i=0; i <= nb_ghosts(); ++i) dirs[i] = rand_dir(None);
         }
         // move pacman
-        cout << "!!!!!!!!!! RONDA " << round() << " !!!!!!!!!!!" <<endl;
+        //cout << "!!!!!!!!!! RONDA " << round() << " !!!!!!!!!!!" <<endl;
         /*escanejar_mapa(map);
         escriure_mapa(map);*/
         Pos p = pacman(me()).pos;   // retorna la posicio del pacman
@@ -94,8 +94,8 @@ struct PLAYER_NAME : public Player {
         int x  = p.i;
         int y = p.j;
         next = bfs (x, y, found);
-        cout << "FINAL: "<< next << endl;
-        if(pacman(me()).type == PowerPacMan) cout << "SUPERPODERES :] !!!" << endl;
+        //cout << "FINAL: "<< next << endl;
+        //if(pacman(me()).type == PowerPacMan) cout << "SUPERPODERES :] !!!" << endl;
         return next;
 
     }
@@ -109,7 +109,7 @@ struct PLAYER_NAME : public Player {
         q.push(make_pair(x, y));
         leng[x][y] = 5;
         //cout << "INITIAL POSITION: " << x << " " << y << endl;
-        cout << leng[x][y] << endl;
+        //cout << leng[x][y] << endl;
         pair<int,int> fin;
 
         int dx[4] = {-1, 1, 0, 0};
@@ -118,7 +118,7 @@ struct PLAYER_NAME : public Player {
         while (not q.empty() and not found) {
             pair<int, int> p = q.front();
             q.pop();
-            cout << "Posicion inicial: " << p.first << ", " << p.second <<endl;
+            //cout << "Posicion inicial: " << p.first << ", " << p.second <<endl;
             for (int i = 0; i < 4 and not found; ++i) {
                 int xx = p.first + dx[i];
                 int yy = p.second + dy[i];
@@ -126,9 +126,9 @@ struct PLAYER_NAME : public Player {
                     if (yy >= 0 and yy < m) {
                         CType c = cell(xx,yy).type;
                         if (c != Wall and c != Gate and leng[xx][yy] == -1) {
-                            cout << "Posicion: " << xx << "," << yy << " i: " << i << " casilla: " << c << endl;
-                            if ((c == Dot or c == Pill or c == Bonus or c == Hammer or c == Mushroom) and not found) {
-                                cout << "encontrado" << endl;
+                            //cout << "Posicion: " << xx << "," << yy << " i: " << i << " casilla: " << c << endl;
+                            if ((c == Pill or c == Bonus or c == Hammer or c == Mushroom) and not found) {
+                                //cout << "encontrado" << endl;
                                 found = true;
                                 fin = make_pair(xx,yy);
                             }
@@ -143,24 +143,24 @@ struct PLAYER_NAME : public Player {
         int col  = fin.second;
         while(leng[row][col] != 5){
             int sig = leng[row][col];
-            cout << sig << endl;
+            //cout << sig << endl;
             if(sig == 0) ++row;
             else if(sig == 1) --row;
             else if(sig == 2) ++col;
             else if(sig == 3) --col;
             if(leng[row][col] == 5){
-                cout << "hemos llegado al inicio siguiente: " << sig << endl;
+                //cout << "hemos llegado al inicio siguiente: " << sig << endl;
                 if(sig == 0) siguiente = Top;
                 else if(sig == 1) siguiente = Bottom;
                 else if(sig == 2) siguiente = Left;
                 else if(sig == 3) siguiente = Right;
-                cout << siguiente << endl;
+                //cout << siguiente << endl;
             }
         }
-        for(int i = 0; i < n; ++i){
+        /*for(int i = 0; i < n; ++i){
             for(int j = 0; j < m; ++j) cout << leng[i][j];
             cout << endl;
-        }
+        }*/
 
         return siguiente;
     }
