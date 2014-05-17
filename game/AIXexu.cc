@@ -186,9 +186,6 @@ struct PLAYER_NAME : public Player {
         if(fin.first != -1 and fin.first != -1){
             int row = fin.first;
             int col  = fin.second;
-            /*cout << ">>>>>>>>>> ANTES DE ENTRAR EN EL BUCLE INF " << row << " " << col << endl;
-            print_m(leng);
-            cout << "<<<<<<<<<< ENTRAMOS EN EL BUCLE" << endl;*/
 
             while(leng[row][col] != 5 and found){
                 int sig = leng[row][col];
@@ -196,7 +193,6 @@ struct PLAYER_NAME : public Player {
                 else if(sig == 1) --row;
                 else if(sig == 2) ++col;
                 else if(sig == 3) --col;
-                cout << sig << " " << leng[row][col] << endl;
 
                 if(leng[row][col] == 5){
                     if(sig == 0) siguiente = Top;
