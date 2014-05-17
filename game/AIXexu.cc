@@ -30,6 +30,7 @@ struct PLAYER_NAME : public Player {
      * Attributes for your player can be defined here.
      */
     vector<Dir> dirs;
+    int powertime = 0;
 
     /**
      * Play method.
@@ -46,34 +47,50 @@ struct PLAYER_NAME : public Player {
         }
         else{
             /* << MOVE PACMAN >> */
+            string s = "pacman";
             Pos p = pacman(me()).pos;   // retorna la posicio del pacman
             CType sdot = Dot;
             CType spill = Pill;
             CType sham = Hammer;
-            Dir mov_dot, mov_pill, mov_ham;
-            mov_dot = mov_pill = mov_ham = None;
-            mov_dot = go(p, sdot);
-            mov_pill = go(p, spill);
-            mov_ham = go(p, sham);
-            if((pacman(me()).type == PowerPacMan) and mov_ham != None) move_my_pacman(mov_ham);
+            CType sbon = Bonus;
+            CType smus = Mushroom;
+            Dir mov_dot, mov_pill, mov_ham, mov_mus, mov_bon;
+            mov_dot = mov_pill = mov_ham = mov_mus = mov_bon = None;
+            mov_dot = go(p, sdot, s);
+            mov_pill = go(p, spill, s);
+            mov_ham = go(p, sham, s);
+            mov_bon = go(p, sbon, s);
+            mov_mus = go(p, smus, s);
+
+            if((pacman(me()).type == PowerPacMan)){
+                if(mov_ham != None) move_my_pacman(mov_ham);
+                else if(mov_pill != None and powertime < (power_time()/2)) move_my_pacman(mov_pill);
+                else if(mov_mus != None) move_my_pacman(mov_mus);
+                else if(mov_bon != None) move_my_pacman(mov_bon);
+                else move_my_pacman(mov_dot);
+                ++powertime;
+            }
             else if(mov_pill != None) move_my_pacman(mov_pill);
             else move_my_pacman(mov_dot);
+            powertime = 0;
 
             /* << MOVE GHOSTS >> */
+            s  = "ghost";
             for (int i=0; i < nb_ghosts(); ++i) {
                 Pos q = ghost(me(), i).pos;
-                Dir res = ghost_go(q);
+                Dir res = go(q, sdot, s);
                 move_my_ghost(i, res);
             }
         }
     }
 
-    Dir go(Pos& p, CType s){  /* Devuelve la posicion a la que nos movemos */
+    Dir go(const Pos& p, const CType t, const string s){  /* Devuelve la posicion a la que nos movemos */
         Dir next = None;
         bool found = false;
         int x  = p.i;
         int y = p.j;
-        next = bfs (x, y, found, s);
+        if(s == "pacman") next = bfs (x, y, found, t);
+        else next = ghost_bfs (x, y, found);
         return next;
     }
     
@@ -101,6 +118,8 @@ struct PLAYER_NAME : public Player {
                 if (xx >= 0 and xx < n) {
                     if (yy >= 0 and yy < m) {
                         CType c = cell(xx,yy).type;
+                        int id = cell(xx,yy).id;
+
                         if (c != Wall and c != Gate and leng[xx][yy] == -1) {
                             if (c == s and not found) {
                                 found = true;
@@ -113,34 +132,10 @@ struct PLAYER_NAME : public Player {
                 }
             }
         }
-        if(fin.first != -1 and fin.second != -1){
-            int row = fin.first;
-            int col  = fin.second;
-            while(leng[row][col] != 5){
-                int sig = leng[row][col];
-                if(sig == 0) ++row;
-                else if(sig == 1) --row;
-                else if(sig == 2) ++col;
-                else if(sig == 3) --col;
-                if(leng[row][col] == 5){
-                    if(sig == 0) siguiente = Top;
-                    else if(sig == 1) siguiente = Bottom;
-                    else if(sig == 2) siguiente = Left;
-                    else if(sig == 3) siguiente = Right;
-                }
-            }
-        }
+        siguiente = way(leng, found, fin);
         return siguiente;
     }
 
-    Dir ghost_go(Pos& p){
-        Dir next = None;
-        bool found = false;
-        int x  = p.i;
-        int y = p.j;
-        next = ghost_bfs (x, y, found);
-        return next;
-    }
 
     Dir ghost_bfs (int x, int y, bool& found) {     /* BFS GHOST per buscar el pacman més proper */
         /* Initialitzations */
@@ -183,6 +178,12 @@ struct PLAYER_NAME : public Player {
                 }
             }
         }
+        siguiente = way(leng, found, fin);
+        return siguiente;
+    }
+
+    Dir way (const vector<vector<int> >& leng, const bool& found, const pair<int,int>& fin){        /* Troba el cami pel que ha d'anar */
+        Dir siguiente = None;
         if(fin.first != -1 and fin.first != -1){
             int row = fin.first;
             int col  = fin.second;
@@ -203,15 +204,6 @@ struct PLAYER_NAME : public Player {
             }
         }
         return siguiente;
-    }
-
-    inline bool ghost_can_move (Pos p, Dir d) {
-        CType t = cell(dest(p, d)).type;
-        if (t == Wall) return false;        
-        int r = cell(dest(p, d)).id;
-        if (r == -1) return true;
-        if (robot(r).type==Ghost) return false;
-        return true;
     }
 
     void print_m(vector<vector<int> > matrix){
