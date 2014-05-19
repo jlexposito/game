@@ -10,7 +10,7 @@ using namespace std;
  * Write the name of your player and save this file
  * with the same name and .cc extension.
  */
-#define PLAYER_NAME xexu
+#define PLAYER_NAME xexuv3
 
 
 
@@ -30,7 +30,7 @@ struct PLAYER_NAME : public Player {
      * Attributes for your player can be defined here.
      */
     vector<Dir> dirs;
-    int powertime = 0;
+    int powertime;
 
     /**
      * Play method.
@@ -44,6 +44,7 @@ struct PLAYER_NAME : public Player {
         /* << INITIALITZATION >> */
         if (round() == 0) {
             dirs = vector<Dir>(nb_ghosts() + 1);
+            powertime = 0;
         }
         else{
             /* << MOVE PACMAN >> */
@@ -120,7 +121,7 @@ struct PLAYER_NAME : public Player {
                         CType c = cell(xx,yy).type;
                         int id = cell(xx,yy).id;
 
-                        if (c != Wall and c != Gate and leng[xx][yy] == -1) {
+                        if (c != Wall and c != Gate and leng[xx][yy] == -1  and not comprovapos(xx,yy)) {
                             if (c == s and not found) {
                                 found = true;
                                 fin = make_pair(xx,yy);
@@ -204,6 +205,37 @@ struct PLAYER_NAME : public Player {
             }
         }
         return siguiente;
+    }
+
+    bool comprovapos(const int x, const int y){
+        bool problem = false;
+        Cell c = cell(x,y);
+        if(c.id != -1){
+            for(int i = 0; i < nb_ghosts() and not problem; ++i){   /* Comprovo si es un ghost meu */
+                Pos q = ghost(me(), i).pos;
+                if(q.i == x and q.j == y) return true;
+            }
+            if((pacman(me()).type == PowerPacMan)){
+                if(robot(c.id).type == Ghost) return false;
+                else if(robot(c.id).type == PacMan or robot(c.id).type == PowerPacMan) return true;
+            }
+            else return true;
+        }
+        return problem;
+    }
+
+    bool come(const int x, const int y){
+        bool problem = false;
+        Cell c = cell(x,y);
+        if(c.id != -1){
+           for(int i = 0; i < nb_ghosts() and not problem; ++i){
+                Pos q = ghost(me(), i).pos;
+                if(q.i == x and q.j == y) return true;
+            }
+            if(robot(c.id).type == Ghost) return true;
+            else if(robot(c.id).type == PowerPacMan) return true;
+        }
+        return problem;
     }
 
     void print_m(vector<vector<int> > matrix){
