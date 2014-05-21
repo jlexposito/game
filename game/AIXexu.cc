@@ -10,7 +10,7 @@ using namespace std;
  * Write the name of your player and save this file
  * with the same name and .cc extension.
  */
-#define PLAYER_NAME PecasRevenge
+#define PLAYER_NAME PecaSRevenGeRIP
 
 
 
@@ -48,6 +48,7 @@ struct PLAYER_NAME : public Player {
         }
         else{
             /* << MOVE PACMAN >> */
+            string s = "pacman";
             Pos p = pacman(me()).pos;   // retorna la posicio del pacman
             CType sdot = Dot;
             CType spill = Pill;
@@ -98,8 +99,9 @@ struct PLAYER_NAME : public Player {
             next = ghost_bfs (p, found, amagar);
             if(amagar == true){
                 Dir scape = None;
-                scape = ghost_scape(p);
-                if(scape != None) next = scape;
+                bool amagat = false;
+                scape = ghost_scape(p, amagat);
+                if(scape != None or amagat) next = scape;
             }
         }
         return next;
@@ -192,7 +194,7 @@ struct PLAYER_NAME : public Player {
         return siguiente;
     }
 
-    Dir ghost_scape (const Pos& gh) {     /* BFS GHOST per buscar el pacman més proper */
+    Dir ghost_scape (const Pos& gh, bool& amagat) {     /* BFS GHOST per buscar el pacman més proper */
         /* Initialitzations */
         Dir siguiente = None;
         int n = rows();
@@ -205,7 +207,10 @@ struct PLAYER_NAME : public Player {
         leng[gh.i][gh.j] = 5;
         fin.i = -1;
         fin.j = -1;
-
+        if(cell(gh).type == Gate) {
+            amagat = true;
+            return None;
+        }
         /* Top,Bottom,Left,Right */
         Dir d[4] = {Top, Bottom, Left, Right};
 
