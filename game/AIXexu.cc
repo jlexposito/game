@@ -10,7 +10,7 @@ using namespace std;
  * Write the name of your player and save this file
  * with the same name and .cc extension.
  */
-#define PLAYER_NAME xexuv4
+#define PLAYER_NAME PecasRevenge
 
 
 
@@ -48,7 +48,6 @@ struct PLAYER_NAME : public Player {
         }
         else{
             /* << MOVE PACMAN >> */
-            string s = "pacman";
             Pos p = pacman(me()).pos;   // retorna la posicio del pacman
             CType sdot = Dot;
             CType spill = Pill;
@@ -97,14 +96,19 @@ struct PLAYER_NAME : public Player {
         if(s == "pacman") next = bfs (p, found, t, search_ghost);
         else{
             next = ghost_bfs (p, found, amagar);
-            if(next == None and amagar == true){
-                ghost_scape(p);
+            if(amagar == true){
+                Dir scape = None;
+                scape = ghost_scape(p);
+                if(scape != None) next = scape;
             }
+        }
         return next;
     }
     
     Dir bfs (const Pos& pac, bool& found, CType s, bool search_ghost) {
         Dir siguiente = None;
+        int n = rows();
+        int m = cols();
         vector<vector<int> > leng(n, vector<int> (m, -1));
         queue<Pos> q;
         q.push(pac);
@@ -149,6 +153,8 @@ struct PLAYER_NAME : public Player {
     Dir ghost_bfs (const Pos& gh, bool& found, bool& amagar) {     /* BFS GHOST per buscar el pacman més proper */
         /* Initialitzations */
         Dir siguiente = None;
+        int n = rows();
+        int m = cols();
         vector<vector<int> > leng(n, vector<int> (m, -1));
         queue<Pos> q;
         q.push(gh);
@@ -174,10 +180,7 @@ struct PLAYER_NAME : public Player {
                                 found = true;
                                 fin = destino;
                             }
-                            else if(robot(id).type == PowerPacMan){
-                                amagar = true;
-                                return None;
-                            }
+                            else if(robot(id).type == PowerPacMan and (pacman(me()).pos != destino))amagar = true;
                         }
                         leng[destino.i][destino.j] = i;
                         q.push(destino);
@@ -189,14 +192,17 @@ struct PLAYER_NAME : public Player {
         return siguiente;
     }
 
-    Dir ghost_scape (const Pos& gh, bool& found) {     /* BFS GHOST per buscar el pacman més proper */
+    Dir ghost_scape (const Pos& gh) {     /* BFS GHOST per buscar el pacman més proper */
         /* Initialitzations */
         Dir siguiente = None;
+        int n = rows();
+        int m = cols();
         vector<vector<int> > leng(n, vector<int> (m, -1));
         queue<Pos> q;
+        bool found  = false;
+        Pos fin;
         q.push(gh);
         leng[gh.i][gh.j] = 5;
-        Pos fin;
         fin.i = -1;
         fin.j = -1;
 
@@ -212,11 +218,9 @@ struct PLAYER_NAME : public Player {
                     int id = cell(destino.i, destino.j).id;
                     CType c = cell(destino.i, destino.j).type;
                     if (c != Wall and leng[destino.i][destino.j] == -1) {
-                        if (id != -1){
-                            if(robot(id).type == PacMan and  (pacman(me()).pos != destino) ) {
-                                found = true;
-                                fin = destino;
-                            }
+                        if(c == Gate and id == -1) {
+                            found = true;
+                            fin = destino;
                         }
                         leng[destino.i][destino.j] = i;
                         q.push(destino);
