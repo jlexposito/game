@@ -88,47 +88,41 @@ struct PLAYER_NAME : public Player {
     Dir go(const Pos& p, const CType t, const string s){  /* Devuelve la posicion a la que nos movemos */
         Dir next = None;
         bool found = false;
-        int x  = p.i;
-        int y = p.j;
-        if(s == "pacman") next = bfs (x, y, found, t);
-        else next = ghost_bfs (x, y, found);
+        if(s == "pacman") next = bfs (p, found, t);
+        else next = ghost_bfs (p, found);
         return next;
     }
     
-    Dir bfs (int x, int y, bool& found, CType s) {
+    Dir bfs (const Pos& pac, bool& found, CType s) {
         int n = rows();
         int m = cols();
         Dir siguiente = None;
         vector<vector<int> > leng(n, vector<int> (m, -1));
-        queue<pair<int, int> > q;
-        q.push(make_pair(x, y));
-        leng[x][y] = 5;
-        pair<int,int> fin;
-        fin.first = -1;
-        fin.second = -1;
+        queue<Pos> q;
+        q.push(pac);
+        leng[pac.i][pac.j] = 5;
+        Pos fin;
+        fin.i = -1;
+        fin.j = -1;
 
-        int dx[4] = {-1, 1, 0, 0};
-        int dy[4] = {0, 0, -1, 1};
+        Dir d[4] = {Top, Bottom, Left, Right};
 
         while (not q.empty() and not found) {
-            pair<int, int> p = q.front();
+            Pos p = q.front();
             q.pop();
             for (int i = 0; i < 4 and not found; ++i) {
-                int xx = p.first + dx[i];
-                int yy = p.second + dy[i];
-                if (xx >= 0 and xx < n) {
-                    if (yy >= 0 and yy < m) {
-                        CType c = cell(xx,yy).type;
-                        int id = cell(xx,yy).id;
+                Pos destino = dest(p, d[i]);
+                if (pos_ok(destino)) {
+                    CType c = cell(destino.i,destino.j).type;
+                    int id = cell(destino.i,destino.j).id;
 
-                        if (c != Wall and c != Gate and leng[xx][yy] == -1  and not comprovapos(xx,yy)) {
-                            if (c == s and not found) {
-                                found = true;
-                                fin = make_pair(xx,yy);
-                            }
-                            leng[xx][yy] = i;
-                            q.push(make_pair(xx, yy));
+                    if (c != Wall and c != Gate and leng[destino.i][destino.j] == -1  and not comprovapos(destino.i,destino.j)) {
+                        if (c == s and not found) {
+                            found = true;
+                            fin = destino;
                         }
+                        leng[destino.i][destino.j] = i;
+                        q.push(destino);
                     }
                 }
             }
@@ -138,43 +132,39 @@ struct PLAYER_NAME : public Player {
     }
 
 
-    Dir ghost_bfs (int x, int y, bool& found) {     /* BFS GHOST per buscar el pacman més proper */
+    Dir ghost_bfs (const Pos& gh, bool& found) {     /* BFS GHOST per buscar el pacman més proper */
         /* Initialitzations */
         int n = rows();
         int m = cols();
         Dir siguiente = None;
         vector<vector<int> > leng(n, vector<int> (m, -1));
-        queue<pair<int, int> > q;
-        q.push(make_pair(x, y));
-        leng[x][y] = 5;
-        pair<int,int> fin;
-        fin.first = -1;
-        fin.second = -1;
+        queue<Pos> q;
+        q.push(gh);
+        leng[gh.i][gh.j] = 5;
+        Pos fin;
+        fin.i = -1;
+        fin.j = -1;
 
         /* Top,Bottom,Left,Right */
-        int dx[4] = {-1, 1, 0, 0};
-        int dy[4] = {0, 0, -1, 1};
+        Dir d[4] = {Top, Bottom, Left, Right};
 
         while (not q.empty() and not found) {
-            pair<int, int> p = q.front();
+            Pos p = q.front();
             q.pop();
             for (int i = 0; i < 4 and not found; ++i) {
-                int xx = p.first + dx[i];
-                int yy = p.second + dy[i];
-                if (xx >= 0 and xx < n) {
-                    if (yy >= 0 and yy < m) {
-                        int id = cell(xx,yy).id;
-                        CType c = cell(xx,yy).type;
-                        if (c != Wall and leng[xx][yy] == -1) {
-                            if (id != -1){
-                                if(robot(id).type == PacMan and  (pacman(me()).pos.i != xx and pacman(me()).pos.j != yy) ) {
-                                    found = true;
-                                    fin = make_pair(xx,yy);
-                                }
+               Pos destino = dest(p, d[i]);
+                if (pos_ok(destino)) {
+                    int id = cell(destino.i, destino.j).id;
+                    CType c = cell(destino.i, destino.j).type;
+                    if (c != Wall and leng[destino.i][destino.j] == -1) {
+                        if (id != -1){
+                            if(robot(id).type == PacMan and  (pacman(me()).pos != destino) ) {
+                                found = true;
+                                fin = destino;
                             }
-                            leng[xx][yy] = i;
-                            q.push(make_pair(xx, yy));
                         }
+                        leng[destino.i][destino.j] = i;
+                        q.push(destino);
                     }
                 }
             }
@@ -183,18 +173,14 @@ struct PLAYER_NAME : public Player {
         return siguiente;
     }
 
-    Dir way (const vector<vector<int> >& leng, const bool& found, const pair<int,int>& fin){        /* Troba el cami pel que ha d'anar */
+    Dir way (const vector<vector<int> >& leng, const bool& found, const Pos& fin){        /* Troba el cami pel que ha d'anar */
         Dir siguiente = None;
-        if(fin.first != -1 and fin.first != -1){
-            int row = fin.first;
-            int col  = fin.second;
-
+        if(fin.i != -1 and fin.j != -1){
+            int row = fin.i;
+            int col  = fin.j;
             while(leng[row][col] != 5 and found){
                 int sig = leng[row][col];
-                if(sig == 0) ++row;
-                else if(sig == 1) --row;
-                else if(sig == 2) ++col;
-                else if(sig == 3) --col;
+                tractar_pos(row, col, sig);
 
                 if(leng[row][col] == 5){
                     if(sig == 0) siguiente = Top;
@@ -207,6 +193,18 @@ struct PLAYER_NAME : public Player {
         return siguiente;
     }
 
+    void tractar_pos(int& row, int& col, const int& i){
+        if(i == 0) ++row;
+        else if(i == 1) --row;
+        else if(i == 2) ++col;
+        else if(i == 3) --col;
+
+        if(row == -1) row = rows()-1;
+        else if(row == rows()) row = 0;
+        if(col == -1) col = cols()-1;
+        else if (col == cols()) col = 0;
+
+    }
     bool comprovapos(const int x, const int y){
         bool problem = false;
         Cell c = cell(x,y);
@@ -255,4 +253,3 @@ struct PLAYER_NAME : public Player {
  * Do not modify the following line.
  */
 RegisterPlayer(PLAYER_NAME);
-
